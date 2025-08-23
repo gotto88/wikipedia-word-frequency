@@ -25,6 +25,11 @@ class TestWikiPageFetcher:
         result = self.calculator.calculate_word_frequency("test test.")
         assert result == Counter({"test": 2})
 
+    def test_two_words_not_proper_space(self):
+        """Test empty string input."""
+        result = self.calculator.calculate_word_frequency("test.test2")
+        assert result == Counter({"test": 1, "test2": 1})
+
     def test_two_different_words(self):
         """Test empty string input."""
         result = self.calculator.calculate_word_frequency("test test2.")
