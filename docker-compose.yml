@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  word-frequency-api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: word-frequency-api-dev
+    ports:
+      - "8000:8000"
+    environment:
+      - MAX_FETCHING_THREADS=10
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONUNBUFFERED=1
+      - PYTHONPATH=/app
+      - LOG_LEVEL=DEBUG
+    volumes:
+      - ./src:/app/src:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - word-frequency-network
+
+networks:
+  word-frequency-network:
+    driver: bridge
