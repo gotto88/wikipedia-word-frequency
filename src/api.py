@@ -25,6 +25,14 @@ async def root():
     """
     Root endpoint that returns 200 OK
     """
+    return {}
+
+
+@app.head("/")
+async def root_head():
+    """
+    HEAD endpoint that returns 200 OK
+    """
     return {"status": "OK", "message": "Word Frequency API is running"}
 
 
