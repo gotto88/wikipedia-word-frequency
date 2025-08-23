@@ -16,4 +16,5 @@ class WordFrequencyCalculator:
             A Counter object containing the frequency of each word in the text.
         """
         cleaned = re.sub(r"[^a-zA-Z0-9\s]", " ", text.strip())
-        return Counter([word.lower() for word in cleaned.split()])
+        words = re.findall(r'\b[A-Za-z]\w{0,}\b', cleaned)
+        return Counter([word.lower() for word in words])

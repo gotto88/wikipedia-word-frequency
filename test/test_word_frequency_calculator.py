@@ -39,3 +39,8 @@ class TestWikiPageFetcher:
         """Test empty string input."""
         result = self.calculator.calculate_word_frequency("test " * 100)
         assert result == Counter({"test": 100})
+
+    def test_omit_words_with_numbers(self):
+        """Test omit numbers."""
+        result = self.calculator.calculate_word_frequency("23 test 123.")
+        assert result == Counter({"test": 1})
