@@ -11,32 +11,32 @@ class TestWikiPageFetcher:
         self.calculator = WordFrequencyCalculator()
 
     def test_empty_string(self):
-        """Test empty string input."""
+        """Test with empty string input."""
         result = self.calculator.calculate_word_frequency("")
         assert result == Counter()
 
     def test_one_word(self):
-        """Test empty string input."""
+        """Test with one word."""
         result = self.calculator.calculate_word_frequency("test.")
         assert result == Counter({"test": 1})
 
     def test_two_same_words(self):
-        """Test empty string input."""
+        """Test with two same words."""
         result = self.calculator.calculate_word_frequency("test test.")
         assert result == Counter({"test": 2})
 
     def test_two_words_not_proper_space(self):
-        """Test empty string input."""
+        """Test with two words not proper space."""
         result = self.calculator.calculate_word_frequency("test.test2")
         assert result == Counter({"test": 1, "test2": 1})
 
     def test_two_different_words(self):
-        """Test empty string input."""
+        """Test with two different words."""
         result = self.calculator.calculate_word_frequency("test test2.")
         assert result == Counter({"test": 1, "test2": 1})
 
     def test_100_same_words(self):
-        """Test empty string input."""
+        """Test with input of 100 same words."""
         result = self.calculator.calculate_word_frequency("test " * 100)
         assert result == Counter({"test": 100})
 
