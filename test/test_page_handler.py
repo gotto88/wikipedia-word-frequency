@@ -208,3 +208,83 @@ class TestPageHandler:
         self.mock_wiki_fetcher.fetch_page.assert_any_call("Software")
         self.mock_wiki_fetcher.fetch_page.assert_any_call("CPU")
         self.mock_wiki_fetcher.fetch_page.assert_any_call("Memory")
+
+    def test_calculate_word_frequency_ignore_words(self):
+        """Test case: ignore words in the ignore list."""
+        root_page_name = "Python"
+
+        mock_root_page = Mock()
+        mock_root_page.title = "Python"
+        mock_root_page.text = "Python is a programming language."
+        mock_root_page.links = {"Programming": None, "Language": None}
+
+        mock_programming_page = Mock()
+        mock_programming_page.title = "Programming"
+        mock_programming_page.text = "Programming is writing code."
+        mock_programming_page.links = {}
+
+        mock_language_page = Mock()
+        mock_language_page.title = "Language"
+        mock_language_page.text = "Language is communication system."
+        mock_language_page.links = {}
+
+        def mock_fetch_page(page_name):
+            if page_name == "Python":
+                return mock_root_page
+            elif page_name == "Programming":
+                return mock_programming_page
+            elif page_name == "Language":
+                return mock_language_page
+            return None
+        self.mock_wiki_fetcher.fetch_page.side_effect = mock_fetch_page
+        result = self.page_handler.calculate_word_frequency(
+            page_name=root_page_name,
+            depth=1,
+            ignore_list=["language", "programming"]
+        )
+        assert result is not None
+        assert result["is"]["count"] == 3
+        assert result["a"]["count"] == 1
+        assert result["code"]["count"] == 1
+        assert result["communication"]["count"] == 1
+        assert result["system"]["count"] == 1
+        assert "language" not in result
+        assert "programming" not in result
+
+    def test_calculate_word_frequency_percentage(self):
+        """Test case: calculate the percentage of the word frequency."""
+        root_page_name = "Test"
+
+        mock_root_page = Mock()
+        mock_root_page.title = "Test"
+        mock_root_page.text = "test test test test"
+        mock_root_page.links = {"Test2": None, "Test3": None}
+
+        mock_test2_page = Mock()
+        mock_test2_page.title = "Test2"
+        mock_test2_page.text = "test2 test2"
+        mock_test2_page.links = {}
+
+        mock_test3_page = Mock()
+        mock_test3_page.title = "Test3"
+        mock_test3_page.text = "test3 test3"
+        mock_test3_page.links = {}
+
+        def mock_fetch_page(page_name):
+            if page_name == "Test":
+                return mock_root_page
+            elif page_name == "Test2":
+                return mock_test2_page
+            elif page_name == "Test3":
+                return mock_test3_page
+            return None
+        self.mock_wiki_fetcher.fetch_page.side_effect = mock_fetch_page
+        result = self.page_handler.calculate_word_frequency(
+            page_name=root_page_name,
+            depth=1,
+            percentile=30,
+        )
+        assert result is not None
+        assert result["test"]["count"] == 4
+        assert "test2" not in result
+        assert "test3" not in result

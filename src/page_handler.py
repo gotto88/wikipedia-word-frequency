@@ -62,6 +62,7 @@ class PageHandler:
         aggregated_frequencies = WordFrequencyCalculator.calculate_word_frequency(
             root_page.text
         )
+        total_hits += aggregated_frequencies.total()
 
         for level in range(1, depth + 1):
             logger.debug("Fetching next level", depth=level, max_depth=depth)
