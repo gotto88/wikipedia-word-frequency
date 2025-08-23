@@ -62,6 +62,7 @@ class PageHandler:
         aggregated_frequencies = WordFrequencyCalculator.calculate_word_frequency(
             root_page.text
         )
+        total_hits += aggregated_frequencies.total()
 
         for level in range(1, depth + 1):
             logger.debug("Fetching next level", depth=level, max_depth=depth)
@@ -89,6 +90,7 @@ class PageHandler:
                             "Error fetching page", page=page_name, error=str(e)
                         )
                         continue
+            next_pages = list(set(next_pages))
             pages_to_fetch = [page_name for page_name in next_pages if page_name not in fethed_pages]
         result = {name: {"count": count, "percent": count / total_hits * 100} for name, count in aggregated_frequencies.items()}
         if percentile:
