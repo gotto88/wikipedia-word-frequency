@@ -25,7 +25,7 @@ class TestPageHandler:
         self.mock_wiki_fetcher.fetch_page.assert_called_once_with(page_name)
 
     def test_calculate_word_frequency_depth_1_with_2_links(self):
-        """Test case: depth 1 with 2 links, each page has one sentence 
+        """Test case: depth 1 with 2 links, each page has one sentence
         content."""
         root_page_name = "Python"
 
@@ -71,7 +71,7 @@ class TestPageHandler:
         self.mock_wiki_fetcher.fetch_page.assert_any_call("Language")
 
     def test_calculate_word_frequency_depth_2_with_multiple_links(self):
-        """Test case: depth 2, each page has 2 links with one sentence 
+        """Test case: depth 2, each page has 2 links with one sentence
         content."""
         root_page_name = "Computer"
         mock_root_page = Mock()
@@ -148,3 +148,63 @@ class TestPageHandler:
         self.mock_wiki_fetcher.fetch_page.assert_any_call("Memory")
         self.mock_wiki_fetcher.fetch_page.assert_any_call("Operating")
         self.mock_wiki_fetcher.fetch_page.assert_any_call("Application")
+
+    def test_calculate_word_frequency_depth_2_same_links_appear(self):
+        """Test case: depth 2, each page has 2 links with one sentence
+        content."""
+        root_page_name = "Computer"
+        mock_root_page = Mock()
+        mock_root_page.title = "Computer"
+        mock_root_page.text = "Computer is electronic device."
+        mock_root_page.links = {"Hardware": None, "Software": None}
+        mock_hardware_page = Mock()
+        mock_hardware_page.title = "Hardware"
+        mock_hardware_page.text = "Hardware is physical components."
+        mock_hardware_page.links = {"CPU": None, "Memory": None}
+        mock_software_page = Mock()
+        mock_software_page.title = "Software"
+        mock_software_page.text = "Software is computer programs."
+        mock_software_page.links = {"CPU": None, "Memory": None}
+
+        mock_cpu_page = Mock()
+        mock_cpu_page.title = "CPU"
+        mock_cpu_page.text = "CPU is central processor."
+        mock_cpu_page.links = {}
+        mock_memory_page = Mock()
+        mock_memory_page.title = "Memory"
+        mock_memory_page.text = "Memory stores data."
+        mock_memory_page.links = {}
+
+        def mock_fetch_page(page_name):
+            page_map = {
+                "Computer": mock_root_page,
+                "Hardware": mock_hardware_page,
+                "Software": mock_software_page,
+                "CPU": mock_cpu_page,
+                "Memory": mock_memory_page
+            }
+            return page_map.get(page_name)
+        self.mock_wiki_fetcher.fetch_page.side_effect = mock_fetch_page
+        result = self.page_handler.calculate_word_frequency(
+            page_name=root_page_name,
+            depth=2
+        )
+        assert result is not None
+        assert result["is"]["count"] == 4
+        assert result["computer"]["count"] == 2
+        assert result["hardware"]["count"] == 1
+        assert result["software"]["count"] == 1
+        assert result["cpu"]["count"] == 1
+        assert result["memory"]["count"] == 1
+        assert result["electronic"]["count"] == 1
+        assert result["physical"]["count"] == 1
+        assert result["programs"]["count"] == 1
+        assert result["central"]["count"] == 1
+        assert result["processor"]["count"] == 1
+        assert result["stores"]["count"] == 1
+        assert self.mock_wiki_fetcher.fetch_page.call_count == 5
+        self.mock_wiki_fetcher.fetch_page.assert_any_call("Computer")
+        self.mock_wiki_fetcher.fetch_page.assert_any_call("Hardware")
+        self.mock_wiki_fetcher.fetch_page.assert_any_call("Software")
+        self.mock_wiki_fetcher.fetch_page.assert_any_call("CPU")
+        self.mock_wiki_fetcher.fetch_page.assert_any_call("Memory")
