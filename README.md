@@ -1,6 +1,7 @@
 # Wikipedia Word Frequency API
 
 Implementation of an API calculating word frequency for a given Wikipedia page and pages linked to it.
+For details of the technical solution, status and future steps check `project_summary.txt`
 
 ## Features
 

@@ -1,0 +1,73 @@
+# Wikipedia Word Frequency API - Project Summary
+
+This project implements an API for calculating word frequencies from Wikipedia pages and their linked pages up to a specified depth.
+
+## Technical Solution
+
+### Wikipedia API Choice and Concurrency Challenges
+- The choice of `wikipediaapi` was not optimal for concurrency requirements
+- Attempted to use `gevent` for true concurrency, but it proved ineffective
+- Code analysis revealed the library uses the standard `requests` library internally
+- Despite patching attempts, proper concurrency could not be achieved
+
+### Threading-Based Solution
+- Implemented configurable threading as an alternative approach
+- Used `ThreadPoolExecutor` with configurable thread count
+- Testing revealed that 20 threads caused Wikipedia API rejections
+- Wikipedia appears to have rate limiting and concurrent request restrictions
+
+### Word Frequency Calculation
+- Implemented regex-based text splitting for performance
+- Evaluated NLTK tokenizer methods but found them significantly slower
+- Custom regex solution provides optimal performance for the use case
+
+### Tools used during implementation
+- Cursor 1.4.5
+- Postman 11.59.7
+- Docker Desktop 4.41.0 
+
+## Current Performance and Limitations
+
+### Performance Metrics
+- **Current Rate**: Approximately 10 pages per second
+- **Thread Configuration**: 10 threads (optimized to avoid rejections)
+- **Architecture**: ASGI design with WSGI-like behavior due to blocking operations
+
+### Technical Limitations
+- **Concurrency**: Limited to threading due to blocking Wikipedia API calls
+- **Architecture Mismatch**: Designed as ASGI but operates like WSGI server
+- **Title Matching**: Requires exact Wikipedia page title matches
+- **Rate Limiting**: Wikipedia API rejections when exceeding concurrent limits
+
+### System Design
+- **Multi-threaded Page Fetching**: Configurable thread pool for concurrent requests
+- **Caching Layer**: Generic cache implementation with TTL support
+- **RESTful API**: FastAPI endpoints for word frequency calculations
+- **Docker Support**: Containerized deployment for development and production
+
+## Next Steps and Improvements
+
+### Concurrency Investigation
+- Research alternative Wikipedia API libraries that support true concurrency
+- Investigate async/await patterns for non-blocking operations
+- Consider implementing custom async HTTP client
+
+### Session and Connection Management
+- Implement proper HTTP session handling for better connection reuse
+- Add connection pooling to reduce overhead
+- Implement retry mechanisms with exponential backoff
+
+### Proxy and Rate Limiting Solutions
+- Implement proxy rotation to avoid IP-based rejections
+- Add intelligent rate limiting based on Wikipedia's constraints
+- Implement request queuing and throttling mechanisms
+
+### Custom Implementation
+- Consider building custom Wikipedia fetching logic
+- Implement direct MediaWiki API integration
+- Add support for different Wikipedia language versions
+
+## Conclusion
+
+The current solution provides a working Wikipedia word frequency API with reasonable performance using threading-based concurrency. While not achieving true asynchronous operation, it successfully balances performance with Wikipedia's rate limiting constraints.
+The next phase should focus on investigating true concurrency solutions and implementing more robust fetching mechanisms to improve performance and reliability. 
