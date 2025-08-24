@@ -14,6 +14,8 @@ services:
       - PYTHONUNBUFFERED=1
       - PYTHONPATH=/app
       - LOG_LEVEL=DEBUG
+      - CACHE_TTL=600
+      - USE_CACHE=true
     volumes:
       - ./src:/app/src:ro
     restart: unless-stopped

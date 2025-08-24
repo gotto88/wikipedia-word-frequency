@@ -1,11 +1,15 @@
+import os
+
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
 import structlog
 import wikipediaapi
 
+from src.cache import WikiPageCache
 from src.models import RequestPost
 from src.page_handler import PageHandler, RootPageNotFoundError
 from src.wikipage_fetcher import WikiPageFetcher
+
 
 logger = structlog.get_logger(__name__)
 
@@ -15,9 +19,18 @@ app = FastAPI(
     version="1.0.0"
 )
 
+DEFAULT_CACHE_TTL = 60 * 60 * 24
+CACHE_TTL = int(os.environ.get("CACHE_TTL", 60 * 60 * 24))
+USE_CACHE = os.environ.get("USE_CACHE", "true").lower() == "true"
+
 wiki_api = wikipediaapi.Wikipedia('Api-User-Agent', 'en')
 wiki_fetcher = WikiPageFetcher(wiki_api=wiki_api)
-page_handler = PageHandler(wiki_fetcher)
+wikipage_cache = WikiPageCache(ttl=CACHE_TTL)
+page_handler = PageHandler(
+    wikipage_fetcher=wiki_fetcher,
+    wikipage_cache=wikipage_cache,
+    use_cache=USE_CACHE
+)
 
 
 @app.get("/")
