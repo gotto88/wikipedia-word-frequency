@@ -3,6 +3,8 @@ from unittest.mock import Mock
 
 from src.page_handler import PageHandler, RootPageNotFoundError
 from src.wikipage_fetcher import WikiPageFetcher
+from src.cache import WikiPageCache
+from src.models import WikiPageInfo
 
 
 class TestPageHandler:
@@ -11,7 +13,14 @@ class TestPageHandler:
     def setup_method(self):
         """Set up test fixtures before each test method."""
         self.mock_wiki_fetcher = Mock(spec=WikiPageFetcher)
-        self.page_handler = PageHandler(self.mock_wiki_fetcher)
+        self._mock_wiki_page_cache = Mock(spec=WikiPageCache)
+        self._mock_wiki_page_cache.get.return_value = None
+        self._mock_wiki_page_cache.set.return_value = None
+        self.page_handler = PageHandler(
+            self.mock_wiki_fetcher,
+            self._mock_wiki_page_cache,
+            use_cache=True
+        )
 
     def test_calculate_word_frequency_root_page_not_found(self):
         """Test negative case: non-existing root page raises
@@ -251,14 +260,21 @@ class TestPageHandler:
         assert "language" not in result
         assert "programming" not in result
 
-    def test_calculate_word_frequency_percentage(self):
-        """Test case: calculate the percentage of the word frequency."""
+    def test_use_cache_got_root_page_info(self):
+        """Test case: get the cached page info if it exists."""
         root_page_name = "Test"
-
-        mock_root_page = Mock()
-        mock_root_page.title = "Test"
-        mock_root_page.text = "test test test test"
-        mock_root_page.links = {"Test2": None, "Test3": None}
+        self._mock_wiki_page_cache.get.side_effect = [
+            WikiPageInfo(
+                page_name="Test",
+                world_freqs={
+                    "test": 4,
+                },
+                links=["Test2", "Test3"]
+            ),
+            None,
+            None
+        ]
+        self.mock_wiki_fetcher.fetch_page.return_value = None
 
         mock_test2_page = Mock()
         mock_test2_page.title = "Test2"
@@ -271,9 +287,7 @@ class TestPageHandler:
         mock_test3_page.links = {}
 
         def mock_fetch_page(page_name):
-            if page_name == "Test":
-                return mock_root_page
-            elif page_name == "Test2":
+            if page_name == "Test2":
                 return mock_test2_page
             elif page_name == "Test3":
                 return mock_test3_page
@@ -281,10 +295,9 @@ class TestPageHandler:
         self.mock_wiki_fetcher.fetch_page.side_effect = mock_fetch_page
         result = self.page_handler.calculate_word_frequency(
             page_name=root_page_name,
-            depth=1,
-            percentile=30,
+            depth=1
         )
         assert result is not None
         assert result["test"]["count"] == 4
-        assert "test2" not in result
-        assert "test3" not in result
+        assert result["test2"]["count"] == 2
+        assert result["test3"]["count"] == 2

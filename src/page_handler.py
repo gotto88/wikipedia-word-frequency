@@ -4,6 +4,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from wikipediaapi import WikipediaPage
 
+from src.cache import WikiPageCache
 from src.models import WikiPageInfo
 from src.wikipage_fetcher import WikiPageFetcher
 from src.word_frequency_calculator import WordFrequencyCalculator
@@ -24,7 +25,12 @@ class PageHandler:
         "MAX_FETCHING_THREADS", DEFAULT_MAX_THREADS)
     )
 
-    def __init__(self, wikipage_fetcher: WikiPageFetcher) -> None:
+    def __init__(
+        self,
+        wikipage_fetcher: WikiPageFetcher,
+        wikipage_cache: WikiPageCache,
+        use_cache: bool
+    ) -> None:
         """
         Initialize the PageHandler with a WikiPageFetcher.
 
@@ -32,6 +38,8 @@ class PageHandler:
             wikipage_fetcher: A WikiPageFetcher instance.
         """
         self._wikipage_fetcher = wikipage_fetcher
+        self._cache = wikipage_cache
+        self._use_cache = use_cache
 
     def calculate_word_frequency(
         self,
@@ -52,16 +60,14 @@ class PageHandler:
         """
         fethed_pages: list[str] = []
         total_hits = 0
-        root_page = self._wikipage_fetcher.fetch_page(page_name)
+        root_page = self._fetch_page_info(page_name)
         if not root_page:
             logger.warning("Root page not found", page=page_name)
             raise RootPageNotFoundError(f"Root page {page_name} not found")
 
-        fethed_pages.append(root_page.title)
-        pages_to_fetch: list[str] = list(root_page.links.keys())
-        aggregated_frequencies = WordFrequencyCalculator.calculate_word_frequency(
-            root_page.text
-        )
+        fethed_pages.append(root_page.page_name)
+        pages_to_fetch: list[str] = root_page.links
+        aggregated_frequencies = root_page.world_freqs
         total_hits += aggregated_frequencies.total()
 
         for level in range(1, depth + 1):
@@ -100,12 +106,18 @@ class PageHandler:
         return result
 
     def _fetch_page_info(self, page_name: str) -> WikiPageInfo | None:
+        if self._use_cache:
+            if cached_page_info := self._cache.get(page_name):
+                return cached_page_info
         page: WikipediaPage | None = self._wikipage_fetcher.fetch_page(page_name)
         if not page:
             logger.warning("Page not found", page=page_name)
             return None
-        return WikiPageInfo(
+        result = WikiPageInfo(
             page_name=page.title,
             world_freqs=WordFrequencyCalculator.calculate_word_frequency(page.text),
             links=list(page.links.keys())
         )
+        if self._use_cache:
+            self._cache.set(page_name, result)
+        return result

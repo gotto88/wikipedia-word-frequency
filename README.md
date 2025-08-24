@@ -81,6 +81,8 @@ docker-compose -f docker-compose.prod.yml logs -f
 - `PYTHONUNBUFFERED`: Ensures Python output is sent straight to terminal
 - `PYTHONPATH`: Sets the Python path to `/app`
 - `LOG_LEVEL`: Logging level (DEBUG for dev, INFO for prod)
+- `CACHE_TTL`: The ttl of in-memory cache
+- `USE_CACHE`: Sets if cache is used
 
 
 # Production
